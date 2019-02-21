@@ -35,7 +35,7 @@ type HttpServer struct {
 	server       http.Server
 	Stop         chan struct{}
 	wg           *sync.WaitGroup
-	writeBuffer   *bytes.Buffer
+	writeBuffer  *bytes.Buffer
 }
 
 func NewHttpServer(port int, prefix string) *HttpServer {
@@ -51,7 +51,7 @@ func NewHttpServer(port int, prefix string) *HttpServer {
 		server:       server,
 		Stop:         make(chan struct{}, 1),
 		wg:           &sync.WaitGroup{},
-		writeBuffer:          &bytes.Buffer{},
+		writeBuffer:  &bytes.Buffer{},
 	}
 	httpServer.wg.Add(1)
 	return httpServer
@@ -92,13 +92,13 @@ func (httpServer *HttpServer) Do(w http.ResponseWriter, r *http.Request) {
 		curTime := time.Now().Format(common.TimeFmt)
 		atomic.AddUint64(&httpServer.successCount, 1)
 		httpServer.writeBuffer.Reset()
-		httpServer.writeBuffer.WriteString(fmt.Sprintf("finish worker %d task,time:%s",req.Id,curTime))
-		_,err = w.Write(httpServer.writeBuffer.Bytes())
+		httpServer.writeBuffer.WriteString(fmt.Sprintf("finish worker %d task,time:%s", req.Id, curTime))
+		_, err = w.Write(httpServer.writeBuffer.Bytes())
 		if err != nil {
-			log.Error("Write failed:",err)
+			log.Error("Write failed:", err)
 			return
 		}
-		fmt.Printf("SuccessCount:%d,Recieved Request Info:Request{Time:%v,UUID:%v}  time:%s\n", httpServer.successCount, req.Time, req.Uid, curTime)
+		fmt.Printf("SuccessCount:%d,Recieved Request Info:Request{Id:%v,Time:%v,UUID:%v}  time:%s\n", httpServer.successCount, req.Id, req.Time, req.Uid, curTime)
 	}
 }
 
