@@ -58,7 +58,7 @@ func ObtainSystemInfo(r *http.Request) *SystemInfo {
 	}
 
 	vm, _ := mem.VirtualMemory()
-	systemInfo.Memory = fmt.Sprintf("%d%s", strconv.FormatUint(vm.Total/1024/1024, 10), "mb")
+	systemInfo.Memory = fmt.Sprintf("%s%s", strconv.FormatUint(vm.Total/1024/1024, 10), "mb")
 	return systemInfo
 }
 func RequestToString(id int) ([]byte, error) {
