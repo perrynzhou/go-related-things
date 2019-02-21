@@ -89,12 +89,13 @@ func (httpServer *HttpServer) Do(w http.ResponseWriter, r *http.Request) {
 		log.Error("Unmarshal failed:", err)
 		return
 	}
+	fmt.Printf("[server begin to  handle %s task]\n", common.ObtainClientInfo(r))
 	curTime := time.Now().Format(common.TimeFmt)
 	atomic.AddUint64(&httpServer.successCount, 1)
 	httpServer.writeBuffer.Reset()
 	switch r.Method {
 	case http.MethodPost:
-		httpServer.writeBuffer.WriteString(fmt.Sprintf("...%s...\nfinish worker %d task,time:%s", common.ObtainClientInfo(r), req.Id, curTime))
+		httpServer.writeBuffer.WriteString(fmt.Sprintf("[finish worker %d task,time:%s]", req.Id, curTime))
 		break
 	case http.MethodGet:
 		systemInfo := common.ObtainSystemInfo(r)
@@ -103,9 +104,8 @@ func (httpServer *HttpServer) Do(w http.ResponseWriter, r *http.Request) {
 			log.Error("Marshal failed:", err)
 			return
 		}
-		httpServer.writeBuffer.WriteString(fmt.Sprintf("...%s...\nfinish worker %d get:\n%s\ntime:%s", common.ObtainClientInfo(r), req.Id, string(b), curTime))
+		httpServer.writeBuffer.WriteString(fmt.Sprintf("[finish worker %d get:\n%s\ntime:%s]", req.Id, string(b), curTime))
 		break
-
 	}
 	_, err = w.Write(httpServer.writeBuffer.Bytes())
 	if err != nil {

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/satori/go.uuid"
@@ -30,7 +31,7 @@ type SystemInfo struct {
 	LogicalCpuCores  int32
 	PhysicalCpuCores int32
 	CpuMHZ           float64
-	Memory           uint64
+	Memory           string
 }
 
 func ObtainClientInfo(r *http.Request) string {
@@ -38,7 +39,7 @@ func ObtainClientInfo(r *http.Request) string {
 	if err != nil {
 		return err.Error()
 	}
-	return fmt.Sprintf("client info:%s:%d", ip, port)
+	return fmt.Sprintf("client info:%s:%s", ip, port)
 }
 func ObtainSystemInfo(r *http.Request) *SystemInfo {
 	systemInfo := &SystemInfo{}
@@ -57,7 +58,7 @@ func ObtainSystemInfo(r *http.Request) *SystemInfo {
 	}
 
 	vm, _ := mem.VirtualMemory()
-	systemInfo.Memory = vm.Total / 1024 / 1024
+	systemInfo.Memory = fmt.Sprintf("%d%s", strconv.FormatUint(vm.Total/1024/1024, 10), "mb")
 	return systemInfo
 }
 func RequestToString(id int) ([]byte, error) {

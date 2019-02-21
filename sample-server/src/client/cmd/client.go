@@ -117,7 +117,7 @@ func main() {
 	flag.Parse()
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
-	httpClient := NewHttpClient(*threadCount, *timeInterval, *serverURL)
+	httpClient := NewHttpClient(*threadCount, *timeInterval, *accessMethod, *serverURL)
 	httpClient.Run()
 	defer httpClient.Close()
 	for {
