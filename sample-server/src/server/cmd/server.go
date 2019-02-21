@@ -78,28 +78,42 @@ func (httpServer *HttpServer) Close() {
 	}
 }
 func (httpServer *HttpServer) Do(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodPost {
-		b, err := ioutil.ReadAll(r.Body)
-		if err != nil {
-			log.Error("ReadAll failed:", err)
-		}
-		req := common.Request{}
-		err = json.Unmarshal(b, &req)
-		if err != nil {
-			log.Error("Unmarshal failed:", err)
-			return
-		}
-		curTime := time.Now().Format(common.TimeFmt)
-		atomic.AddUint64(&httpServer.successCount, 1)
-		httpServer.writeBuffer.Reset()
-		httpServer.writeBuffer.WriteString(fmt.Sprintf("finish worker %d task,time:%s", req.Id, curTime))
-		_, err = w.Write(httpServer.writeBuffer.Bytes())
-		if err != nil {
-			log.Error("Write failed:", err)
-			return
-		}
-		fmt.Printf("SuccessCount:%d,Recieved Request Info:Request{Id:%v,Time:%v,UUID:%v}  time:%s\n", httpServer.successCount, req.Id, req.Time, req.Uid, curTime)
+
+	b, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Error("ReadAll failed:", err)
 	}
+	req := common.Request{}
+	err = json.Unmarshal(b, &req)
+	if err != nil {
+		log.Error("Unmarshal failed:", err)
+		return
+	}
+	curTime := time.Now().Format(common.TimeFmt)
+	atomic.AddUint64(&httpServer.successCount, 1)
+	httpServer.writeBuffer.Reset()
+	switch r.Method {
+	case http.MethodPost:
+		httpServer.writeBuffer.WriteString(fmt.Sprintf("...%s...\nfinish worker %d task,time:%s", common.ObtainClientInfo(r), req.Id, curTime))
+		break
+	case http.MethodGet:
+		systemInfo := common.ObtainSystemInfo(r)
+		b, err := json.Marshal(systemInfo)
+		if err != nil {
+			log.Error("Marshal failed:", err)
+			return
+		}
+		httpServer.writeBuffer.WriteString(fmt.Sprintf("...%s...\nfinish worker %d get:\n%s\ntime:%s", common.ObtainClientInfo(r), req.Id, string(b), curTime))
+		break
+
+	}
+	_, err = w.Write(httpServer.writeBuffer.Bytes())
+	if err != nil {
+		log.Error("Write failed:", err)
+		return
+	}
+	fmt.Printf("SuccessCount:%d,Recieved Request Info:Request{Id:%v,Time:%v,UUID:%v}  time:%s\n", httpServer.successCount, req.Id, req.Time, req.Uid, curTime)
+
 }
 
 func main() {

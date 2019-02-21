@@ -20,6 +20,7 @@ var (
 	timeInterval = flag.Duration("interval", 100, "timeinterval for send data to server")
 	serverURL    = flag.String("url", "http://127.0.0.1:8081/welcome", "default url for server")
 	threadCount  = flag.Int("count", 1, "default thread for access server")
+	accessMethod = flag.String("method", "post", "default access method mode(post/get)")
 )
 
 type HttpClient struct {
@@ -28,15 +29,17 @@ type HttpClient struct {
 	threadCount  int
 	url          string
 	timeInterval time.Duration
+	method       string
 }
 
-func NewHttpClient(count int, timeInterval time.Duration, url string) *HttpClient {
+func NewHttpClient(count int, timeInterval time.Duration, method, url string) *HttpClient {
 	httpClient := &HttpClient{
 		wg:           &sync.WaitGroup{},
 		stop:         make(chan struct{}, count),
 		url:          url,
 		timeInterval: timeInterval,
 		threadCount:  count,
+		method:       method,
 	}
 	fmt.Printf("...stop %d workers...\n", count)
 	return httpClient
@@ -48,6 +51,15 @@ func (httpClient *HttpClient) initWorker(id int) {
 	fmt.Println("...start worker", id, "...")
 	client := http.Client{}
 	ticker := time.NewTicker(*timeInterval * time.Millisecond)
+	var accessMethod string
+	switch httpClient.method {
+	case http.MethodGet:
+		accessMethod = http.MethodGet
+		break
+	case http.MethodPost:
+		accessMethod = http.MethodPost
+		break
+	}
 	defer ticker.Stop()
 	for {
 		select {
@@ -65,7 +77,8 @@ func (httpClient *HttpClient) initWorker(id int) {
 				log.Error("NewReader failed:")
 				continue
 			}
-			req, err := http.NewRequest(http.MethodPost, *serverURL, reader)
+
+			req, err := http.NewRequest(accessMethod, *serverURL, reader)
 			if err != nil {
 				log.Error("NewRequest failed:", err)
 				continue

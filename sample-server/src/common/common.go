@@ -8,6 +8,9 @@ import (
 	"time"
 
 	"github.com/satori/go.uuid"
+	"github.com/shirou/gopsutil/cpu"
+	"github.com/shirou/gopsutil/host"
+	"github.com/shirou/gopsutil/mem"
 )
 
 const (
@@ -20,12 +23,42 @@ type Request struct {
 	Uid  string
 }
 
+type SystemInfo struct {
+	HostName      string
+	KernelVersion string
+
+	LogicalCpuCores  int32
+	PhysicalCpuCores int32
+	CpuMHZ           float64
+	Memory           uint64
+}
+
 func ObtainClientInfo(r *http.Request) string {
 	ip, port, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
 		return err.Error()
 	}
 	return fmt.Sprintf("client info:%s:%d", ip, port)
+}
+func ObtainSystemInfo(r *http.Request) *SystemInfo {
+	systemInfo := &SystemInfo{}
+	systemInfo.KernelVersion, _ = host.KernelVersion()
+	hostInfo, _ := host.Info()
+	systemInfo.HostName = hostInfo.Hostname
+
+	cpuInfoStats, _ := cpu.Info()
+
+	for _, info := range cpuInfoStats {
+		if systemInfo.CpuMHZ == float64(0) {
+			systemInfo.CpuMHZ = info.Mhz
+		}
+		systemInfo.LogicalCpuCores = systemInfo.LogicalCpuCores + info.Cores
+		systemInfo.PhysicalCpuCores = systemInfo.PhysicalCpuCores + 1
+	}
+
+	vm, _ := mem.VirtualMemory()
+	systemInfo.Memory = vm.Total / 1024 / 1024
+	return systemInfo
 }
 func RequestToString(id int) ([]byte, error) {
 	uid, err := uuid.NewV4()
@@ -43,5 +76,4 @@ func RequestToString(id int) ([]byte, error) {
 		return nil, err
 	}
 	return b, nil
-
 }
