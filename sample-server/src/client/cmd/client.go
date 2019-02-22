@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -18,7 +19,7 @@ import (
 
 var (
 	timeInterval = flag.Duration("interval", 100, "timeinterval for send data to server")
-	serverURL    = flag.String("url", "http://127.0.0.1:8081/welcome", "default url for server")
+	serverURL    = flag.String("url", "http://127.0.0.1:8081/request", "default url for server")
 	threadCount  = flag.Int("count", 1, "default thread for access server")
 	accessMethod = flag.String("method", "post", "default access method mode(post/get)")
 )
@@ -39,7 +40,7 @@ func NewHttpClient(count int, timeInterval time.Duration, method, url string) *H
 		url:          url,
 		timeInterval: timeInterval,
 		threadCount:  count,
-		method:       method,
+		method:       strings.ToUpper(method),
 	}
 	fmt.Printf("...stop %d workers...\n", count)
 	return httpClient
@@ -117,6 +118,7 @@ func main() {
 	flag.Parse()
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
+
 	httpClient := NewHttpClient(*threadCount, *timeInterval, *accessMethod, *serverURL)
 	httpClient.Run()
 	defer httpClient.Close()

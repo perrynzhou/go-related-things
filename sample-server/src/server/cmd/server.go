@@ -26,7 +26,7 @@ const (
 
 var (
 	port      = flag.Int("port", 8081, "sample server port")
-	urlPrefix = flag.String("prefix", "welcome", "default access prefix for url")
+	urlPrefix = flag.String("prefix", "request", "default access prefix for url")
 )
 
 type HttpServer struct {
@@ -93,6 +93,7 @@ func (httpServer *HttpServer) Do(w http.ResponseWriter, r *http.Request) {
 	curTime := time.Now().Format(common.TimeFmt)
 	atomic.AddUint64(&httpServer.successCount, 1)
 	httpServer.writeBuffer.Reset()
+	log.Println("access method:",r.Method)
 	switch r.Method {
 	case http.MethodPost:
 		httpServer.writeBuffer.WriteString(fmt.Sprintf("[finish worker %d task,time:%s]", req.Id, curTime))
